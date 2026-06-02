@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>NEON WAVE | Audio Universe</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="stars"></div>
+  <div class="twinkling"></div>
+  
+  <div class="app-container">
+    <div class="hero-section" id="heroSection">
+      <div class="hero-content">
+        <div class="logo"><i class="fas fa-head-side-vr"></i><span>NEON<span>WAVE</span></span></div>
+        <div class="hero-title"><h1>Погрузись в <span class="gradient-text">мир звука</span></h1><p>Загружай, делись, открывай новое</p></div>
+        <div class="hero-buttons"><button class="btn-primary" id="exploreBtn"><i class="fas fa-compass"></i> Исследовать</button><button class="btn-secondary" id="uploadBtn"><i class="fas fa-cloud-upload-alt"></i> Загрузить трек</button></div>
+        <div class="hero-stats"><div class="stat"><span class="stat-number" id="totalSoundsCount">0</span><span class="stat-label">звуков</span></div><div class="stat"><span class="stat-number" id="totalLikesCount">0</span><span class="stat-label">лайков</span></div></div>
+      </div>
+    </div>
+
+    <div class="main-interface" id="mainInterface" style="display: none;">
+      <div class="top-bar"><div class="logo-small"><i class="fas fa-head-side-vr"></i><span>NEON<span>WAVE</span></span></div><div class="search-bar"><i class="fas fa-search"></i><input type="text" id="searchInput" placeholder="Поиск звуков..."></div><div class="user-info"><div class="user-avatar"><i class="fas fa-user-astronaut"></i></div><span class="user-name" id="userName">Listener</span></div></div>
+      
+      <div class="now-playing" id="nowPlaying" style="display: none;"><div class="np-glow"></div><div class="np-content"><div class="np-wave"><i class="fas fa-music"></i></div><div class="np-info"><div class="np-title" id="npTitle">-</div><div class="np-artist" id="npArtist">Не выбрано</div></div><div class="np-controls"><button id="npPrev"><i class="fas fa-backward-step"></i></button><button id="npPlayPause"><i class="fas fa-play"></i></button><button id="npNext"><i class="fas fa-forward-step"></i></button></div><div class="np-volume"><i class="fas fa-volume-up"></i><input type="range" id="volumeSlider" min="0" max="100" value="70"></div></div></div>
+
+      <main id="main-content"><div class="loader"><div class="neon-loader"></div></div></main>
+
+      <nav class="bottom-nav">
+        <button class="nav-btn active" data-tab="home"><i class="fas fa-home"></i><span>Главная</span><div class="nav-glow"></div></button>
+        <button class="nav-btn" data-tab="trending"><i class="fas fa-fire"></i><span>Тренды</span><div class="nav-glow"></div></button>
+        <button class="nav-btn" data-tab="my"><i class="fas fa-head-side-headphones"></i><span>Моя библиотека</span><div class="nav-glow"></div></button>
+        <button class="nav-btn" data-tab="upload"><i class="fas fa-cloud-upload-alt"></i><span>Загрузить</span><div class="nav-glow"></div></button>
+        <button class="nav-btn" data-tab="favorites"><i class="fas fa-heart"></i><span>Любимое</span><div class="nav-glow"></div></button>
+      </nav>
+    </div>
+  </div>
+
+  <script type="module" src="script.js"></script>
+</body>
+</html>
