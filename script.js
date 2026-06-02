@@ -1,5 +1,5 @@
 // ========== SDK через другой CDN (РАБОТАЕТ) ==========
-import { Client, Databases, Storage, ID, Query } from "https://esm.sh/appwrite@11.0.0";
+import { Client, Databases, Storage, ID, Query } from "https://esm.sh/appwrite@12.0";
 
 // ========== ТВОИ ДАННЫЕ ==========
 const PROJECT_ID = "6a1f05ec0025b498a9ec";
