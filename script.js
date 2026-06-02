@@ -1,5 +1,5 @@
-// ========== ИСПРАВЛЕННАЯ ВЕРСИЯ — без ошибок с импортами ==========
-import { Client, Databases, Storage, ID, Query } from "https://unpkg.com/appwrite@14.0.0/dist/esm/sdk.mjs";
+// ========== Appwrite SDK через CDN (работает в браузере) ==========
+import { Client, Databases, Storage, ID, Query } from "https://cdn.jsdelivr.net/npm/appwrite@13.0.0/dist/esm/sdk.mjs";
 
 // ========== ТВОИ ДАННЫЕ ==========
 const PROJECT_ID = "6a1f05ec0025b498a9ec";
@@ -7,7 +7,6 @@ const API_KEY = "standard_1b1f59d1dfa0e414c3682724e6d54a405ec4a0c727f00fc6666870
 const DATABASE_ID = "AudioDB";
 const COLLECTION_ID = "sounds";
 const BUCKET_ID = "audio-files";
-// ==================================
 
 const client = new Client();
 client.setEndpoint("https://cloud.appwrite.io/v1").setProject(PROJECT_ID);
@@ -16,6 +15,7 @@ client.setKey(API_KEY);
 const databases = new Databases(client);
 const storage = new Storage(client);
 
+// ========== ПОЛЬЗОВАТЕЛЬ ==========
 let currentUserId = localStorage.getItem("userId");
 if (!currentUserId) {
     currentUserId = "user_" + Date.now() + "_" + Math.random().toString(36).substr(2, 6);
@@ -46,6 +46,7 @@ const totalLikesSpan = document.getElementById("totalLikesCount");
 const userNameSpan = document.getElementById("userName");
 const volumeSlider = document.getElementById("volumeSlider");
 
+// Загрузка звуков
 async function loadSounds() {
     try {
         const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID, [
@@ -56,9 +57,9 @@ async function loadSounds() {
         renderCurrentTab();
         updateStats();
     } catch (err) {
-        console.error("Ошибка загрузки:", err);
+        console.error("Ошибка:", err);
         if (mainContent) {
-            mainContent.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h3>Ошибка соединения</h3><p>${err.message}</p></div>`;
+            mainContent.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h3>Ошибка</h3><p>${err.message}</p></div>`;
         }
     }
 }
@@ -307,8 +308,7 @@ function setActiveTab(tabId) {
             btn.classList.remove('active');
         }
     });
-    if (tabId === "upload") showUploadForm();
-    else renderCurrentTab();
+    renderCurrentTab();
 }
 
 function showMainInterface() {
@@ -332,8 +332,8 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
 });
 
 // Запуск
-if (heroSection && mainInterface) {
-    // Ждём действия пользователя
+if (!heroSection || heroSection.style.display !== "none") {
+    // Ждём кнопку
 } else {
     showMainInterface();
 }
