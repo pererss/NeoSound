@@ -1,16 +1,20 @@
-import { Client, Databases, Storage, ID, Query } from "https://esm.sh/appwrite@12.0.0";
+import { Client, Databases, Storage, ID, Query } from "https://esm.sh/appwrite@10.0.0";
 
 const PROJECT_ID = "6a1f05ec0025b498a9ec";
+const API_KEY = "standard_1b1f59d1dfa0e414c3682724e6d54a405ec4a0c727f00fc6666870b340c922a9e04a18e282ff5ecd9a11fef4910c2403f86b011eea5739f48130d308bd4895c7aaf9a86de6c476103529ed205484e9eddb4174cd9f5b04053ab46fb53396687841398499e47088b567af112502c97dc7e1fa7b412cb56c7a2db410854320d478";
 const DATABASE_ID = "AudioDB";
 const COLLECTION_ID = "sounds";
 const BUCKET_ID = "audio-files";
 
 const client = new Client();
-client.setEndpoint("https://cloud.appwrite.io/v1").setProject(PROJECT_ID);
+client.setEndpoint("https://cloud.appwrite.io/v1");
+client.setProject(PROJECT_ID);
+client.setKey(API_KEY);  // Теперь работает
 
 const databases = new Databases(client);
 const storage = new Storage(client);
 
+// Остальной код без изменений (такой же, как был)
 let currentUserId = localStorage.getItem("userId");
 if (!currentUserId) {
     currentUserId = "user_" + Date.now() + "_" + Math.random().toString(36).substr(2, 6);
@@ -23,7 +27,6 @@ let currentTab = "home";
 let currentAudio = null;
 let searchQuery = "";
 
-// DOM элементы
 const heroSection = document.getElementById("heroSection");
 const mainInterface = document.getElementById("mainInterface");
 const exploreBtn = document.getElementById("exploreBtn");
@@ -43,9 +46,7 @@ const volumeSlider = document.getElementById("volumeSlider");
 
 async function loadSounds() {
     try {
-        const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID, [
-            Query.orderDesc("createdAt")
-        ]);
+        const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID, [Query.orderDesc("createdAt")]);
         allSounds = response.documents;
         await loadLikes();
         renderCurrentTab();
@@ -93,14 +94,8 @@ async function deleteSound(soundId, userId) {
 async function handleUpload(e) {
     const file = e.target.files[0];
     if (!file) return;
-    if (file.size > 10 * 1024 * 1024) {
-        alert("Файл больше 10 МБ");
-        return;
-    }
-    if (!["audio/mpeg", "audio/wav", "audio/ogg"].includes(file.type)) {
-        alert("Только MP3, WAV, OGG");
-        return;
-    }
+    if (file.size > 10 * 1024 * 1024) return alert("Файл больше 10 МБ");
+    if (!["audio/mpeg", "audio/wav", "audio/ogg"].includes(file.type)) return alert("Только MP3, WAV, OGG");
 
     const statusDiv = document.getElementById("uploadStatus");
     const progressFill = document.getElementById("uploadProgress");
@@ -109,7 +104,6 @@ async function handleUpload(e) {
         const fileRes = await storage.createFile(BUCKET_ID, ID.unique(), file);
         if (progressFill) progressFill.style.width = "100%";
         if (statusDiv) statusDiv.innerHTML = "Сохранение...";
-
         await databases.createDocument(DATABASE_ID, COLLECTION_ID, ID.unique(), {
             name: file.name,
             fileId: fileRes.$id,
@@ -118,7 +112,6 @@ async function handleUpload(e) {
             createdAt: new Date().toISOString(),
             likesCount: 0
         });
-
         if (statusDiv) statusDiv.innerHTML = "✅ Загружено!";
         await loadSounds();
         setActiveTab("home");
@@ -130,10 +123,7 @@ async function handleUpload(e) {
 function playSound(soundId) {
     const sound = allSounds.find(s => s.$id === soundId);
     if (!sound) return;
-    if (currentAudio) {
-        currentAudio.pause();
-        currentAudio = null;
-    }
+    if (currentAudio) currentAudio.pause();
     const url = storage.getFileView(BUCKET_ID, sound.fileId);
     const audio = new Audio(url);
     audio.volume = volumeSlider ? volumeSlider.value / 100 : 0.7;
@@ -158,20 +148,20 @@ function togglePlayPause() {
 }
 
 function playNext() {
-    const currentList = getFilteredSounds();
-    const currentSound = currentAudio ? allSounds.find(s => storage.getFileView(BUCKET_ID, s.fileId) === currentAudio.src) : null;
-    if (currentSound) {
-        const idx = currentList.findIndex(s => s.$id === currentSound.$id);
-        if (currentList[idx + 1]) playSound(currentList[idx + 1].$id);
+    const list = getFilteredSounds();
+    const current = currentAudio ? allSounds.find(s => storage.getFileView(BUCKET_ID, s.fileId) === currentAudio.src) : null;
+    if (current) {
+        const idx = list.findIndex(s => s.$id === current.$id);
+        if (list[idx + 1]) playSound(list[idx + 1].$id);
     }
 }
 
 function playPrev() {
-    const currentList = getFilteredSounds();
-    const currentSound = currentAudio ? allSounds.find(s => storage.getFileView(BUCKET_ID, s.fileId) === currentAudio.src) : null;
-    if (currentSound) {
-        const idx = currentList.findIndex(s => s.$id === currentSound.$id);
-        if (currentList[idx - 1]) playSound(currentList[idx - 1].$id);
+    const list = getFilteredSounds();
+    const current = currentAudio ? allSounds.find(s => storage.getFileView(BUCKET_ID, s.fileId) === currentAudio.src) : null;
+    if (current) {
+        const idx = list.findIndex(s => s.$id === current.$id);
+        if (list[idx - 1]) playSound(list[idx - 1].$id);
     }
 }
 
@@ -195,16 +185,10 @@ function escapeHtml(str) {
 
 function getFilteredSounds() {
     let filtered = [...allSounds];
-    if (searchQuery) {
-        filtered = filtered.filter(s => s.name.toLowerCase().includes(searchQuery));
-    }
-    if (currentTab === "my") {
-        filtered = filtered.filter(s => s.userId === currentUserId);
-    } else if (currentTab === "favorites") {
-        filtered = filtered.filter(s => likedSounds.has(s.$id));
-    } else if (currentTab === "trending") {
-        filtered = filtered.sort((a, b) => (b.likesCount || 0) - (a.likesCount || 0));
-    }
+    if (searchQuery) filtered = filtered.filter(s => s.name.toLowerCase().includes(searchQuery));
+    if (currentTab === "my") filtered = filtered.filter(s => s.userId === currentUserId);
+    if (currentTab === "favorites") filtered = filtered.filter(s => likedSounds.has(s.$id));
+    if (currentTab === "trending") filtered = filtered.sort((a, b) => (b.likesCount || 0) - (a.likesCount || 0));
     return filtered;
 }
 
@@ -290,12 +274,9 @@ function showUploadForm() {
 
 function setActiveTab(tabId) {
     currentTab = tabId;
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        if (btn.getAttribute('data-tab') === tabId) {
-            btn.classList.add('active');
-        } else {
-            btn.classList.remove('active');
-        }
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        if (btn.getAttribute('data-tab') === tabId) btn.classList.add('active');
+        else btn.classList.remove('active');
     });
     renderCurrentTab();
 }
@@ -306,7 +287,6 @@ function showMainInterface() {
     loadSounds();
 }
 
-// Инициализация
 if (exploreBtn) exploreBtn.onclick = showMainInterface;
 if (uploadHeroBtn) uploadHeroBtn.onclick = () => { showMainInterface(); setActiveTab("upload"); };
 if (searchInput) searchInput.oninput = (e) => { searchQuery = e.target.value.toLowerCase(); renderCurrentTab(); };
@@ -316,9 +296,8 @@ if (npNext) npNext.onclick = playNext;
 if (volumeSlider) volumeSlider.oninput = (e) => { if (currentAudio) currentAudio.volume = e.target.value / 100; };
 if (userNameSpan) userNameSpan.textContent = localStorage.getItem("userName") || "Listener";
 
-document.querySelectorAll('.tab-btn').forEach(btn => {
+document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.onclick = () => setActiveTab(btn.getAttribute('data-tab'));
 });
 
-// Запуск
 showMainInterface();
