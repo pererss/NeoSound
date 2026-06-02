@@ -1,21 +1,16 @@
-// ========== SDK через другой CDN (РАБОТАЕТ) ==========
-import { Client, Databases, Storage, ID, Query } from "https://esm.sh/appwrite@12.0";
+import { Client, Databases, Storage, ID, Query } from "https://esm.sh/appwrite@12.0.0";
 
-// ========== ТВОИ ДАННЫЕ ==========
 const PROJECT_ID = "6a1f05ec0025b498a9ec";
-const API_KEY = "standard_1b1f59d1dfa0e414c3682724e6d54a405ec4a0c727f00fc6666870b340c922a9e04a18e282ff5ecd9a11fef4910c2403f86b011eea5739f48130d308bd4895c7aaf9a86de6c476103529ed205484e9eddb4174cd9f5b04053ab46fb53396687841398499e47088b567af112502c97dc7e1fa7b412cb56c7a2db410854320d478";
 const DATABASE_ID = "AudioDB";
 const COLLECTION_ID = "sounds";
 const BUCKET_ID = "audio-files";
 
 const client = new Client();
 client.setEndpoint("https://cloud.appwrite.io/v1").setProject(PROJECT_ID);
-client.setKey(API_KEY);
 
 const databases = new Databases(client);
 const storage = new Storage(client);
 
-// ========== ОСТАЛЬНОЙ КОД ТАКОЙ ЖЕ, КАК РАНЕЕ ==========
 let currentUserId = localStorage.getItem("userId");
 if (!currentUserId) {
     currentUserId = "user_" + Date.now() + "_" + Math.random().toString(36).substr(2, 6);
@@ -56,10 +51,8 @@ async function loadSounds() {
         renderCurrentTab();
         updateStats();
     } catch (err) {
-        console.error("Ошибка:", err);
-        if (mainContent) {
-            mainContent.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h3>Ошибка</h3><p>${err.message}</p></div>`;
-        }
+        console.error(err);
+        mainContent.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h3>Ошибка</h3><p>${err.message}</p></div>`;
     }
 }
 
@@ -157,10 +150,10 @@ function togglePlayPause() {
     if (!currentAudio) return;
     if (currentAudio.paused) {
         currentAudio.play();
-        if (npPlayPause) npPlayPause.innerHTML = '<i class="fas fa-pause"></i>';
+        npPlayPause.innerHTML = '<i class="fas fa-pause"></i>';
     } else {
         currentAudio.pause();
-        if (npPlayPause) npPlayPause.innerHTML = '<i class="fas fa-play"></i>';
+        npPlayPause.innerHTML = '<i class="fas fa-play"></i>';
     }
 }
 
@@ -169,8 +162,7 @@ function playNext() {
     const currentSound = currentAudio ? allSounds.find(s => storage.getFileView(BUCKET_ID, s.fileId) === currentAudio.src) : null;
     if (currentSound) {
         const idx = currentList.findIndex(s => s.$id === currentSound.$id);
-        const next = currentList[idx + 1];
-        if (next) playSound(next.$id);
+        if (currentList[idx + 1]) playSound(currentList[idx + 1].$id);
     }
 }
 
@@ -179,8 +171,7 @@ function playPrev() {
     const currentSound = currentAudio ? allSounds.find(s => storage.getFileView(BUCKET_ID, s.fileId) === currentAudio.src) : null;
     if (currentSound) {
         const idx = currentList.findIndex(s => s.$id === currentSound.$id);
-        const prev = currentList[idx - 1];
-        if (prev) playSound(prev.$id);
+        if (currentList[idx - 1]) playSound(currentList[idx - 1].$id);
     }
 }
 
@@ -192,8 +183,7 @@ function updateStats() {
 
 function formatDate(dateStr) {
     if (!dateStr) return "новое";
-    const date = new Date(dateStr);
-    const hours = Math.floor((new Date() - date) / 3600000);
+    const hours = Math.floor((new Date() - new Date(dateStr)) / 3600000);
     if (hours < 1) return "только что";
     if (hours < 24) return `${hours} ч назад`;
     return `${Math.floor(hours / 24)} д назад`;
@@ -300,7 +290,7 @@ function showUploadForm() {
 
 function setActiveTab(tabId) {
     currentTab = tabId;
-    document.querySelectorAll('.nav-btn').forEach(btn => {
+    document.querySelectorAll('.tab-btn').forEach(btn => {
         if (btn.getAttribute('data-tab') === tabId) {
             btn.classList.add('active');
         } else {
@@ -326,7 +316,7 @@ if (npNext) npNext.onclick = playNext;
 if (volumeSlider) volumeSlider.oninput = (e) => { if (currentAudio) currentAudio.volume = e.target.value / 100; };
 if (userNameSpan) userNameSpan.textContent = localStorage.getItem("userName") || "Listener";
 
-document.querySelectorAll('.nav-btn').forEach(btn => {
+document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.onclick = () => setActiveTab(btn.getAttribute('data-tab'));
 });
 
