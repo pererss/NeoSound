@@ -93,7 +93,8 @@ async function deleteSound(soundId, userId) {
         await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, soundId);
         await loadSounds();
     } catch (err) {
-        alert("Ошибка удаления");
+        console.error("Ошибка удаления:", err);
+        alert("Ошибка удаления: " + err.message);
     }
 }
 
@@ -101,20 +102,9 @@ async function handleUpload(e) {
     const file = e.target.files[0];
     if (!file) return;
     
-    // Запрашиваем название у пользователя
     let customName = prompt("Введите название звука (до 15 символов):", file.name.split('.')[0].slice(0, 15));
-    
-    // Если пользователь нажал Отмена или ничего не ввёл
-    if (customName === null) {
-        return;
-    }
-    
-    // Если пустая строка — используем оригинальное имя
-    if (customName.trim() === "") {
-        customName = file.name.split('.')[0];
-    }
-    
-    // Ограничиваем 15 символами
+    if (customName === null) return;
+    if (customName.trim() === "") customName = file.name.split('.')[0];
     customName = customName.slice(0, 15);
     
     if (file.size > 10 * 1024 * 1024) {
@@ -277,7 +267,6 @@ function renderSoundsList(soundsArray) {
         btn.onclick = () => playSound(btn.getAttribute('data-id'));
     });
     
-    // СКАЧИВАНИЕ
     document.querySelectorAll('.btn-download').forEach(btn => {
         btn.onclick = async (e) => {
             e.preventDefault();
@@ -344,15 +333,14 @@ function setActiveTab(tabId) {
     renderCurrentTab();
 }
 
-function showMainInterface() {
-    if (heroSection) heroSection.style.display = "none";
-    if (mainInterface) mainInterface.style.display = "block";
-    loadSounds();
-}
+// ========== ЗАПУСК (без главного экрана) ==========
+// Сразу показываем основной интерфейс
+if (heroSection) heroSection.style.display = "none";
+if (mainInterface) mainInterface.style.display = "block";
 
-// ========== ЗАПУСК ==========
-if (exploreBtn) exploreBtn.onclick = showMainInterface;
-if (uploadHeroBtn) uploadHeroBtn.onclick = () => { showMainInterface(); setActiveTab("upload"); };
+// Назначаем обработчики
+if (exploreBtn) exploreBtn.onclick = () => {};
+if (uploadHeroBtn) uploadHeroBtn.onclick = () => { setActiveTab("upload"); };
 if (searchInput) searchInput.oninput = (e) => { searchQuery = e.target.value.toLowerCase(); renderCurrentTab(); };
 if (npPlayPause) npPlayPause.onclick = togglePlayPause;
 if (npPrev) npPrev.onclick = playPrev;
@@ -364,9 +352,5 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.onclick = () => setActiveTab(btn.getAttribute('data-tab'));
 });
 
-// Главный экран показываем, если он есть
-if (heroSection) {
-    // Оставляем герой-экран
-} else {
-    showMainInterface();
-}
+// Загружаем звуки
+loadSounds();
