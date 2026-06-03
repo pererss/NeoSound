@@ -7,7 +7,7 @@ const Query = Appwrite.Query;
 
 client
     .setEndpoint('https://cloud.appwrite.io/v1')
-    .setProject('6a1f05ec0025b498a9ec'); // Твой Project ID
+    .setProject('6a1f05ec0025b498a9ec'); // Твой Project ID уже здесь
 
 // ========== ПОЛЬЗОВАТЕЛЬ ==========
 let currentUserId = localStorage.getItem("userId");
@@ -322,10 +322,3 @@ if (userNameSpan) userNameSpan.textContent = localStorage.getItem("userName") ||
 document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.onclick = () => setActiveTab(btn.getAttribute('data-tab'));
 });
-
-// Автоматический запуск, если hero скрыт
-if (heroSection && heroSection.style.display !== "none") {
-    // Ждём кнопку
-} else {
-    showMainInterface();
-}
