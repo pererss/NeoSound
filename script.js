@@ -12,7 +12,7 @@ client
 // ========== ТВОИ ID ==========
 const DATABASE_ID = "6a1f0bc600288d9c3510";
 const COLLECTION_ID = "sounds";
-const BUCKET_ID = "audio-files";
+const BUCKET_ID = "6a20250b001555f062d9";
 
 // ========== ПОЛЬЗОВАТЕЛЬ ==========
 let currentUserId = localStorage.getItem("userId");
