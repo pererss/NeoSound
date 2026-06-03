@@ -258,19 +258,32 @@ function renderSoundsList(soundsArray) {
     });
     document.querySelectorAll('.btn-play').forEach(btn => {
         btn.onclick = () => playSound(btn.getAttribute('data-id'));
-    });
-    document.querySelectorAll('.btn-download').forEach(btn => {
-        btn.onclick = async (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            const s = allSounds.find(x => x.$id === btn.getAttribute('data-id'));
-            if (s) {
-                const url = storage.getFileView(BUCKET_ID, s.fileId);
-                // Открываем в новой вкладке для скачивания
-                window.open(url, '_blank');
+ document.querySelectorAll('.btn-download').forEach(btn => {
+    btn.onclick = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const s = allSounds.find(x => x.$id === btn.getAttribute('data-id'));
+        if (s) {
+            const url = storage.getFileView(BUCKET_ID, s.fileId);
+            // Прямое скачивание через fetch и blob
+            try {
+                const response = await fetch(url);
+                const blob = await response.blob();
+                const blobUrl = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = s.name;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(blobUrl);
+            } catch (err) {
+                console.error("Ошибка скачивания:", err);
+                alert("Не удалось скачать файл");
             }
-        };
-    });
+        }
+    };
+});
     document.querySelectorAll('.btn-delete').forEach(btn => {
         btn.onclick = () => deleteSound(btn.getAttribute('data-id'), currentUserId);
     });
