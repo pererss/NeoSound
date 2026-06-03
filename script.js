@@ -1,4 +1,4 @@
-import { Client, Databases, Storage, ID, Query } from "https://esm.sh/appwrite@10.0.0";
+import { Client, Databases, Storage, ID, Query } from "https://cdn.jsdelivr.net/npm/appwrite@17.0.0";
 
 const PROJECT_ID = "6a1f05ec0025b498a9ec";
 const API_KEY = "standard_1b1f59d1dfa0e414c3682724e6d54a405ec4a0c727f00fc6666870b340c922a9e04a18e282ff5ecd9a11fef4910c2403f86b011eea5739f48130d308bd4895c7aaf9a86de6c476103529ed205484e9eddb4174cd9f5b04053ab46fb53396687841398499e47088b567af112502c97dc7e1fa7b412cb56c7a2db410854320d478";
