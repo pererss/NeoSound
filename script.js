@@ -1,4 +1,4 @@
-// ========== ИНИЦИАЛИЗАЦИЯ APPWRITE ==========
+// ========== ПОДКЛЮЧЕНИЕ К APPWRITE ==========
 const client = new Appwrite.Client();
 const databases = new Appwrite.Databases(client);
 const storage = new Appwrite.Storage(client);
@@ -7,7 +7,12 @@ const Query = Appwrite.Query;
 
 client
     .setEndpoint('https://cloud.appwrite.io/v1')
-    .setProject('6a1f05ec0025b498a9ec'); // Твой Project ID уже здесь
+    .setProject('6a1f05ec0025b498a9ec');
+
+// ========== ТВОИ ID ==========
+const DATABASE_ID = "6a1f0bc600288d9c3510";
+const COLLECTION_ID = "sounds";
+const BUCKET_ID = "audio-files";
 
 // ========== ПОЛЬЗОВАТЕЛЬ ==========
 let currentUserId = localStorage.getItem("userId");
@@ -43,7 +48,7 @@ const volumeSlider = document.getElementById("volumeSlider");
 // ========== ЗАГРУЗКА ЗВУКОВ ==========
 async function loadSounds() {
     try {
-        const response = await databases.listDocuments('AudioDB', 'sounds', [
+        const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID, [
             Query.orderDesc("createdAt")
         ]);
         allSounds = response.documents;
@@ -70,10 +75,10 @@ function saveLikes() {
 async function toggleLike(soundId, currentLikes) {
     if (likedSounds.has(soundId)) {
         likedSounds.delete(soundId);
-        await databases.updateDocument('AudioDB', 'sounds', soundId, { likesCount: currentLikes - 1 });
+        await databases.updateDocument(DATABASE_ID, COLLECTION_ID, soundId, { likesCount: currentLikes - 1 });
     } else {
         likedSounds.add(soundId);
-        await databases.updateDocument('AudioDB', 'sounds', soundId, { likesCount: currentLikes + 1 });
+        await databases.updateDocument(DATABASE_ID, COLLECTION_ID, soundId, { likesCount: currentLikes + 1 });
     }
     saveLikes();
     await loadSounds();
@@ -84,8 +89,8 @@ async function deleteSound(soundId, userId) {
     if (!confirm("Удалить звук?")) return;
     try {
         const sound = allSounds.find(s => s.$id === soundId);
-        if (sound?.fileId) await storage.deleteFile('audio-files', sound.fileId);
-        await databases.deleteDocument('AudioDB', 'sounds', soundId);
+        if (sound?.fileId) await storage.deleteFile(BUCKET_ID, sound.fileId);
+        await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, soundId);
         await loadSounds();
     } catch (err) {
         alert("Ошибка удаления");
@@ -108,11 +113,11 @@ async function handleUpload(e) {
     const progressFill = document.getElementById("uploadProgress");
 
     try {
-        const fileRes = await storage.createFile('audio-files', ID.unique(), file);
+        const fileRes = await storage.createFile(BUCKET_ID, ID.unique(), file);
         if (progressFill) progressFill.style.width = "100%";
         if (statusDiv) statusDiv.innerHTML = "Сохранение...";
 
-        await databases.createDocument('AudioDB', 'sounds', ID.unique(), {
+        await databases.createDocument(DATABASE_ID, COLLECTION_ID, ID.unique(), {
             name: file.name,
             fileId: fileRes.$id,
             size: file.size,
@@ -136,7 +141,7 @@ function playSound(soundId) {
         currentAudio.pause();
         currentAudio = null;
     }
-    const url = storage.getFileView('audio-files', sound.fileId);
+    const url = storage.getFileView(BUCKET_ID, sound.fileId);
     const audio = new Audio(url);
     audio.volume = volumeSlider ? volumeSlider.value / 100 : 0.7;
     audio.play();
@@ -161,7 +166,7 @@ function togglePlayPause() {
 
 function playNext() {
     const currentList = getFilteredSounds();
-    const currentSound = currentAudio ? allSounds.find(s => storage.getFileView('audio-files', s.fileId) === currentAudio.src) : null;
+    const currentSound = currentAudio ? allSounds.find(s => storage.getFileView(BUCKET_ID, s.fileId) === currentAudio.src) : null;
     if (currentSound) {
         const idx = currentList.findIndex(s => s.$id === currentSound.$id);
         if (currentList[idx + 1]) playSound(currentList[idx + 1].$id);
@@ -170,7 +175,7 @@ function playNext() {
 
 function playPrev() {
     const currentList = getFilteredSounds();
-    const currentSound = currentAudio ? allSounds.find(s => storage.getFileView('audio-files', s.fileId) === currentAudio.src) : null;
+    const currentSound = currentAudio ? allSounds.find(s => storage.getFileView(BUCKET_ID, s.fileId) === currentAudio.src) : null;
     if (currentSound) {
         const idx = currentList.findIndex(s => s.$id === currentSound.$id);
         if (currentList[idx - 1]) playSound(currentList[idx - 1].$id);
@@ -258,7 +263,7 @@ function renderSoundsList(soundsArray) {
         btn.onclick = async () => {
             const s = allSounds.find(x => x.$id === btn.getAttribute('data-id'));
             if (s) {
-                const url = storage.getFileView('audio-files', s.fileId);
+                const url = storage.getFileView(BUCKET_ID, s.fileId);
                 const a = document.createElement('a');
                 a.href = url;
                 a.download = s.name;
@@ -322,3 +327,5 @@ if (userNameSpan) userNameSpan.textContent = localStorage.getItem("userName") ||
 document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.onclick = () => setActiveTab(btn.getAttribute('data-tab'));
 });
+
+showMainInterface();
