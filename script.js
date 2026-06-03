@@ -260,14 +260,14 @@ function renderSoundsList(soundsArray) {
         btn.onclick = () => playSound(btn.getAttribute('data-id'));
     });
     document.querySelectorAll('.btn-download').forEach(btn => {
-        btn.onclick = async () => {
+        btn.onclick = async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             const s = allSounds.find(x => x.$id === btn.getAttribute('data-id'));
             if (s) {
                 const url = storage.getFileView(BUCKET_ID, s.fileId);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = s.name;
-                a.click();
+                // Открываем в новой вкладке для скачивания
+                window.open(url, '_blank');
             }
         };
     });
