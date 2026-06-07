@@ -3,70 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>NEONWAVE | Аудиошеринг</title>
+    <title>NEONWAVE | Круглый звук</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/appwrite@17.0.0"></script>
 </head>
 <body>
     <div class="stars"></div>
-    <div class="twinkling"></div>
     
-    <div class="app-container">
-        <!-- HERO -->
-        <div class="hero-section" id="heroSection">
-            <div class="hero-content">
-                <div class="logo">
-                    <i class="fas fa-head-side-vr"></i>
-                    <span>NEON<span>WAVE</span></span>
-                </div>
-                <div class="hero-title">
-                    <h1>ПОГРУЗИСЬ В <span class="gradient-text">МИР ЗВУКА</span></h1>
-                    <p>ЗАГРУЖАЙ, ДЕЛИСЬ, ОТКРЫВАЙ НОВОЕ</p>
-                </div>
-                <div class="hero-buttons">
-                    <button class="btn-primary" id="exploreBtn"><i class="fas fa-compass"></i> ИССЛЕДОВАТЬ</button>
-                    <button class="btn-secondary" id="uploadBtn"><i class="fas fa-cloud-upload-alt"></i> ЗАГРУЗИТЬ ТРЕК</button>
-                </div>
-                <div class="hero-stats">
-                    <div class="stat"><span class="stat-number" id="totalSoundsCount">0</span><span class="stat-label">ЗВУКОВ</span></div>
-                    <div class="stat"><span class="stat-number" id="totalLikesCount">0</span><span class="stat-label">ЛАЙКОВ</span></div>
+    <div class="app">
+        <!-- ХЕДЕР -->
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-head-side-vr"></i>
+                <span>NEON<span>WAVE</span></span>
+            </div>
+            <div class="header-actions">
+                <button class="icon-btn" id="searchToggle"><i class="fas fa-search"></i></button>
+                <button class="icon-btn" id="uploadBtn"><i class="fas fa-cloud-upload-alt"></i></button>
+                <div class="user-badge" id="userBadge">
+                    <i class="fas fa-user-astronaut"></i>
+                    <span id="userName">ГОСТЬ</span>
                 </div>
             </div>
+        </header>
+
+        <!-- ПОИСК -->
+        <div class="search-bar" id="searchBar" style="display: none;">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Поиск по названию...">
+            <button id="closeSearch"><i class="fas fa-times"></i></button>
         </div>
 
-        <!-- ОСНОВНОЙ ИНТЕРФЕЙС -->
-        <div class="main-interface" id="mainInterface" style="display: none;">
-            <div class="top-bar">
-                <div class="logo-small"><i class="fas fa-head-side-vr"></i><span>NEON<span>WAVE</span></span></div>
-                <div class="search-bar"><i class="fas fa-search"></i><input type="text" id="searchInput" placeholder="ПОИСК ЗВУКОВ..."></div>
-                <div class="user-info"><div class="user-avatar"><i class="fas fa-user-astronaut"></i></div><span class="user-name" id="userName">LISTENER</span></div>
+        <!-- ОСНОВНОЙ КОНТЕНТ -->
+        <main class="main" id="mainContent">
+            <div class="welcome-message" id="welcomeMsg">
+                <i class="fas fa-head-side-vr"></i>
+                <h2>ДОБРО ПОЖАЛОВАТЬ В NEONWAVE</h2>
+                <p>Нажми на кнопку <i class="fas fa-cloud-upload-alt"></i> чтобы загрузить первый звук</p>
+                <p class="hint">🎵 Звуки отображаются в виде кругов — нажми на любой, чтобы открыть плеер</p>
             </div>
-            
-            <div class="now-playing" id="nowPlaying" style="display: none;">
-                <div class="np-glow"></div>
-                <div class="np-content">
-                    <div class="np-wave"><i class="fas fa-music"></i></div>
-                    <div class="np-info"><div class="np-title" id="npTitle">-</div><div class="np-artist" id="npArtist">НЕ ВЫБРАНО</div></div>
-                    <div class="np-controls">
-                        <button id="npPrev"><i class="fas fa-backward-step"></i></button>
-                        <button id="npPlayPause"><i class="fas fa-play"></i></button>
-                        <button id="npNext"><i class="fas fa-forward-step"></i></button>
-                    </div>
-                    <div class="np-volume"><i class="fas fa-volume-up"></i><input type="range" id="volumeSlider" min="0" max="100" value="70"></div>
+            <div class="sounds-grid" id="soundsGrid"></div>
+        </main>
+
+        <!-- НИЖНЕЕ МЕНЮ -->
+        <nav class="bottom-nav">
+            <button class="nav-btn active" data-tab="home">
+                <i class="fas fa-home"></i>
+                <span>ГЛАВНАЯ</span>
+            </button>
+            <button class="nav-btn" data-tab="trending">
+                <i class="fas fa-fire"></i>
+                <span>ТРЕНДЫ</span>
+            </button>
+            <button class="nav-btn" data-tab="my">
+                <i class="fas fa-head-side-headphones"></i>
+                <span>МОЁ</span>
+            </button>
+            <button class="nav-btn" data-tab="favorites">
+                <i class="fas fa-heart"></i>
+                <span>ИЗБРАННОЕ</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО ЗВУКА -->
+    <div class="sound-modal" id="soundModal">
+        <div class="modal-overlay"></div>
+        <div class="modal-container">
+            <button class="modal-close"><i class="fas fa-times"></i></button>
+            <div class="modal-content" id="modalContent">
+                <!-- Сюда загружается содержимое звука -->
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО ЗАГРУЗКИ -->
+    <div class="upload-modal" id="uploadModal">
+        <div class="modal-overlay"></div>
+        <div class="modal-container upload-container">
+            <button class="modal-close"><i class="fas fa-times"></i></button>
+            <h2><i class="fas fa-cloud-upload-alt"></i> ЗАГРУЗИТЬ ЗВУК</h2>
+            <div class="upload-area" id="uploadArea">
+                <i class="fas fa-music"></i>
+                <p>Нажми или перетащи файл</p>
+                <p class="hint">MP3, WAV, OGG до 10 МБ</p>
+                <input type="file" id="audioFile" accept=".mp3,.wav,.ogg">
+                <button class="upload-select-btn">ВЫБРАТЬ ФАЙЛ</button>
+            </div>
+            <div class="upload-progress" id="uploadProgress" style="display: none;">
+                <div class="progress-bar">
+                    <div class="progress-fill"></div>
                 </div>
+                <p id="uploadStatus"></p>
             </div>
-
-            <main id="main-content"><div class="loader"><div class="neon-loader"></div></div></main>
-
-            <nav class="bottom-nav">
-                <button class="nav-btn active" data-tab="home"><i class="fas fa-home"></i><span>ГЛАВНАЯ</span><div class="nav-glow"></div></button>
-                <button class="nav-btn" data-tab="trending"><i class="fas fa-fire"></i><span>ТРЕНДЫ</span><div class="nav-glow"></div></button>
-                <button class="nav-btn" data-tab="my"><i class="fas fa-head-side-headphones"></i><span>МОЯ БИБЛИОТЕКА</span><div class="nav-glow"></div></button>
-                <button class="nav-btn" data-tab="upload"><i class="fas fa-cloud-upload-alt"></i><span>ЗАГРУЗИТЬ</span><div class="nav-glow"></div></button>
-                <button class="nav-btn" data-tab="favorites"><i class="fas fa-heart"></i><span>ИЗБРАННОЕ</span><div class="nav-glow"></div></button>
-            </nav>
         </div>
     </div>
 
