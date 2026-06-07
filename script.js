@@ -1,4 +1,4 @@
-// ========== ПОДКЛЮЧЕНИЕ К APPWRITE ==========
+// ========== APPWRITE ==========
 const client = new Appwrite.Client();
 const databases = new Appwrite.Databases(client);
 const storage = new Appwrite.Storage(client);
@@ -9,7 +9,6 @@ client
     .setEndpoint('https://cloud.appwrite.io/v1')
     .setProject('6a1f05ec0025b498a9ec');
 
-// ========== ТВОИ ID ==========
 const DATABASE_ID = "6a1f0bc600288d9c3510";
 const COLLECTION_ID = "sounds";
 const BUCKET_ID = "6a20250b001555f062d9";
@@ -24,26 +23,20 @@ if (!currentUserId) {
 let allSounds = [];
 let likedSounds = new Set();
 let currentTab = "home";
-let currentAudio = null;
 let searchQuery = "";
 
 // DOM элементы
-const heroSection = document.getElementById("heroSection");
-const mainInterface = document.getElementById("mainInterface");
-const exploreBtn = document.getElementById("exploreBtn");
-const uploadHeroBtn = document.getElementById("uploadBtn");
-const mainContent = document.getElementById("main-content");
-const searchInput = document.getElementById("searchInput");
-const nowPlayingDiv = document.getElementById("nowPlaying");
-const npTitle = document.getElementById("npTitle");
-const npArtist = document.getElementById("npArtist");
-const npPlayPause = document.getElementById("npPlayPause");
-const npPrev = document.getElementById("npPrev");
-const npNext = document.getElementById("npNext");
-const totalSoundsSpan = document.getElementById("totalSoundsCount");
-const totalLikesSpan = document.getElementById("totalLikesCount");
-const userNameSpan = document.getElementById("userName");
-const volumeSlider = document.getElementById("volumeSlider");
+const soundsGrid = document.getElementById('soundsGrid');
+const searchInput = document.getElementById('searchInput');
+const searchBar = document.getElementById('searchBar');
+const searchToggle = document.getElementById('searchToggle');
+const closeSearch = document.getElementById('closeSearch');
+const welcomeMsg = document.getElementById('welcomeMsg');
+const uploadBtn = document.getElementById('uploadBtn');
+const uploadModal = document.getElementById('uploadModal');
+const soundModal = document.getElementById('soundModal');
+const modalContent = document.getElementById('modalContent');
+const userNameSpan = document.getElementById('userName');
 
 // ========== ЗАГРУЗКА ЗВУКОВ ==========
 async function loadSounds() {
@@ -53,13 +46,10 @@ async function loadSounds() {
         ]);
         allSounds = response.documents;
         await loadLikes();
-        renderCurrentTab();
+        renderSounds();
         updateStats();
     } catch (err) {
-        console.error("Ошибка загрузки:", err);
-        if (mainContent) {
-            mainContent.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h3>Ошибка соединения</h3><p>${err.message}</p></div>`;
-        }
+        console.error("Ошибка:", err);
     }
 }
 
@@ -70,6 +60,105 @@ async function loadLikes() {
 
 function saveLikes() {
     localStorage.setItem(`likes_${currentUserId}`, JSON.stringify([...likedSounds]));
+}
+
+function updateStats() {
+    // Обновляем статистику если нужно
+}
+
+// ========== ОТРИСОВКА КРУГЛЫХ КАРТОЧЕК ==========
+function renderSounds() {
+    let filtered = [...allSounds];
+    if (searchQuery) {
+        filtered = filtered.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    }
+    if (currentTab === "my") {
+        filtered = filtered.filter(s => s.userId === currentUserId);
+    } else if (currentTab === "favorites") {
+        filtered = filtered.filter(s => likedSounds.has(s.$id));
+    } else if (currentTab === "trending") {
+        filtered = filtered.sort((a, b) => (b.likesCount || 0) - (a.likesCount || 0));
+    }
+    
+    if (filtered.length === 0) {
+        soundsGrid.innerHTML = `
+            <div class="welcome-message">
+                <i class="fas fa-volume-off"></i>
+                <h3>ЗВУКОВ НЕТ</h3>
+                <p>Нажми на кнопку <i class="fas fa-cloud-upload-alt"></i> чтобы загрузить первый звук</p>
+            </div>
+        `;
+        welcomeMsg.style.display = 'none';
+        return;
+    }
+    
+    welcomeMsg.style.display = 'none';
+    soundsGrid.innerHTML = filtered.map(sound => `
+        <div class="sound-circle" data-id="${sound.$id}">
+            <div class="circle">
+                <i class="fas fa-waveform"></i>
+            </div>
+            <div class="sound-name">${escapeHtml(sound.name)}</div>
+            <div class="sound-meta">
+                <span><i class="fas fa-heart"></i> ${sound.likesCount || 0}</span>
+                <span><i class="fas fa-user"></i> ${sound.userId === currentUserId ? 'Вы' : 'Слушатель'}</span>
+            </div>
+        </div>
+    `).join('');
+    
+    document.querySelectorAll('.sound-circle').forEach(el => {
+        el.addEventListener('click', () => openSoundModal(el.getAttribute('data-id')));
+    });
+}
+
+function escapeHtml(str) {
+    return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m] || m));
+}
+
+// ========== ОТКРЫТИЕ МОДАЛКИ СО ЗВУКОМ ==========
+async function openSoundModal(soundId) {
+    const sound = allSounds.find(s => s.$id === soundId);
+    if (!sound) return;
+    
+    const isLiked = likedSounds.has(sound.$id);
+    const url = storage.getFileView(BUCKET_ID, sound.fileId);
+    
+    modalContent.innerHTML = `
+        <div class="sound-player">
+            <h3>${escapeHtml(sound.name)}</h3>
+            <div class="player-stats">
+                <button class="like-btn ${isLiked ? 'liked' : ''}" data-id="${sound.$id}">
+                    <i class="fas fa-heart"></i> ${sound.likesCount || 0}
+                </button>
+                ${sound.userId === currentUserId ? `<button class="delete-btn" data-id="${sound.$id}"><i class="fas fa-trash"></i> УДАЛИТЬ</button>` : ''}
+            </div>
+            <audio controls src="${url}" autoplay></audio>
+            <p class="hint">🎵 Загружено: ${new Date(sound.createdAt).toLocaleDateString()}</p>
+            <p class="hint">⬇️ Скачать можно через три точки в плеере</p>
+        </div>
+    `;
+    
+    soundModal.classList.add('active');
+    
+    document.querySelector('.like-btn')?.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const id = e.currentTarget.getAttribute('data-id');
+        const s = allSounds.find(x => x.$id === id);
+        if (s) {
+            await toggleLike(id, s.likesCount || 0);
+            openSoundModal(id);
+        }
+    });
+    
+    document.querySelector('.delete-btn')?.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const id = e.currentTarget.getAttribute('data-id');
+        if (confirm('Удалить звук?')) {
+            await deleteSound(id, currentUserId);
+            soundModal.classList.remove('active');
+            loadSounds();
+        }
+    });
 }
 
 async function toggleLike(soundId, currentLikes) {
@@ -86,16 +175,25 @@ async function toggleLike(soundId, currentLikes) {
 
 async function deleteSound(soundId, userId) {
     if (userId !== currentUserId) return;
-    if (!confirm("Удалить звук?")) return;
     try {
         const sound = allSounds.find(s => s.$id === soundId);
         if (sound?.fileId) await storage.deleteFile(BUCKET_ID, sound.fileId);
         await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, soundId);
-        await loadSounds();
     } catch (err) {
         alert("Ошибка удаления");
     }
 }
+
+// ========== ЗАГРУЗКА ЗВУКА ==========
+function showUploadModal() {
+    uploadModal.classList.add('active');
+}
+
+document.getElementById('uploadArea')?.addEventListener('click', () => {
+    document.getElementById('audioFile').click();
+});
+
+document.getElementById('audioFile')?.addEventListener('change', handleUpload);
 
 async function handleUpload(e) {
     const file = e.target.files[0];
@@ -114,15 +212,19 @@ async function handleUpload(e) {
         alert("Только MP3, WAV, OGG");
         return;
     }
-
-    const statusDiv = document.getElementById("uploadStatus");
-    const progressFill = document.getElementById("uploadProgress");
-
+    
+    const progressDiv = document.getElementById('uploadProgress');
+    const statusDiv = document.getElementById('uploadStatus');
+    const progressFill = progressDiv.querySelector('.progress-fill');
+    
+    progressDiv.style.display = 'block';
+    statusDiv.innerText = 'Загрузка...';
+    
     try {
         const fileRes = await storage.createFile(BUCKET_ID, ID.unique(), file);
-        if (progressFill) progressFill.style.width = "100%";
-        if (statusDiv) statusDiv.innerHTML = "Сохранение...";
-
+        progressFill.style.width = "100%";
+        statusDiv.innerText = "Сохранение...";
+        
         await databases.createDocument(DATABASE_ID, COLLECTION_ID, ID.unique(), {
             name: customName,
             fileId: fileRes.$id,
@@ -131,225 +233,57 @@ async function handleUpload(e) {
             createdAt: new Date().toISOString(),
             likesCount: 0
         });
-
-        if (statusDiv) statusDiv.innerHTML = "✅ Загружено!";
-        await loadSounds();
-        setActiveTab("home");
+        
+        statusDiv.innerText = "✅ Загружено!";
+        setTimeout(() => {
+            uploadModal.classList.remove('active');
+            progressDiv.style.display = 'none';
+            progressFill.style.width = '0%';
+            loadSounds();
+        }, 1000);
     } catch (err) {
-        if (statusDiv) statusDiv.innerHTML = "❌ " + err.message;
+        statusDiv.innerText = "❌ " + err.message;
     }
 }
 
-function playSound(soundId) {
-    const sound = allSounds.find(s => s.$id === soundId);
-    if (!sound) return;
-    if (currentAudio) {
-        currentAudio.pause();
-        currentAudio = null;
-    }
-    const url = storage.getFileView(BUCKET_ID, sound.fileId);
-    const audio = new Audio(url);
-    audio.volume = volumeSlider ? volumeSlider.value / 100 : 0.7;
-    audio.play();
-    currentAudio = audio;
-    if (npTitle) npTitle.textContent = sound.name;
-    if (npArtist) npArtist.textContent = sound.userId === currentUserId ? "Вы" : "Автор";
-    if (nowPlayingDiv) nowPlayingDiv.style.display = "block";
-    if (npPlayPause) npPlayPause.innerHTML = '<i class="fas fa-pause"></i>';
-    audio.onended = () => { if (npPlayPause) npPlayPause.innerHTML = '<i class="fas fa-play"></i>'; };
-}
-
-function togglePlayPause() {
-    if (!currentAudio) return;
-    if (currentAudio.paused) {
-        currentAudio.play();
-        if (npPlayPause) npPlayPause.innerHTML = '<i class="fas fa-pause"></i>';
-    } else {
-        currentAudio.pause();
-        if (npPlayPause) npPlayPause.innerHTML = '<i class="fas fa-play"></i>';
-    }
-}
-
-function playNext() {
-    const currentList = getFilteredSounds();
-    const currentSound = currentAudio ? allSounds.find(s => storage.getFileView(BUCKET_ID, s.fileId) === currentAudio.src) : null;
-    if (currentSound) {
-        const idx = currentList.findIndex(s => s.$id === currentSound.$id);
-        if (currentList[idx + 1]) playSound(currentList[idx + 1].$id);
-    }
-}
-
-function playPrev() {
-    const currentList = getFilteredSounds();
-    const currentSound = currentAudio ? allSounds.find(s => storage.getFileView(BUCKET_ID, s.fileId) === currentAudio.src) : null;
-    if (currentSound) {
-        const idx = currentList.findIndex(s => s.$id === currentSound.$id);
-        if (currentList[idx - 1]) playSound(currentList[idx - 1].$id);
-    }
-}
-
-function updateStats() {
-    if (totalSoundsSpan) totalSoundsSpan.textContent = allSounds.length;
-    const totalLikes = allSounds.reduce((sum, s) => sum + (s.likesCount || 0), 0);
-    if (totalLikesSpan) totalLikesSpan.textContent = totalLikes;
-}
-
-function formatDate(dateStr) {
-    if (!dateStr) return "новое";
-    const date = new Date(dateStr);
-    const hours = Math.floor((new Date() - date) / 3600000);
-    if (hours < 1) return "только что";
-    if (hours < 24) return `${hours} ч назад`;
-    return `${Math.floor(hours / 24)} д назад`;
-}
-
-function escapeHtml(str) {
-    return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m] || m));
-}
-
-function getFilteredSounds() {
-    let filtered = [...allSounds];
-    if (searchQuery) {
-        filtered = filtered.filter(s => s.name.toLowerCase().includes(searchQuery));
-    }
-    if (currentTab === "my") {
-        filtered = filtered.filter(s => s.userId === currentUserId);
-    } else if (currentTab === "favorites") {
-        filtered = filtered.filter(s => likedSounds.has(s.$id));
-    } else if (currentTab === "trending") {
-        filtered = filtered.sort((a, b) => (b.likesCount || 0) - (a.likesCount || 0));
-    }
-    return filtered;
-}
-
-function renderSoundsList(soundsArray) {
-    if (!soundsArray.length) {
-        mainContent.innerHTML = `<div class="empty-state"><i class="fas fa-head-side-vr"></i><h3>Звуков нет</h3><p>Загрузи первый звук!</p></div>`;
-        return;
-    }
-    let html = `<div class="sounds-grid">`;
-    for (const s of soundsArray) {
-        const isLiked = likedSounds.has(s.$id);
-        const isMine = s.userId === currentUserId;
-        html += `
-            <div class="sound-card">
-                <div class="card-header">
-                    <div class="sound-title"><i class="fas fa-waveform"></i> ${escapeHtml(s.name.length > 35 ? s.name.substr(0,32)+'...' : s.name)}</div>
-                    <div class="sound-duration">${formatDate(s.createdAt)}</div>
-                </div>
-                <div class="sound-meta">
-                    <span><i class="fas fa-user"></i> ${s.userId === currentUserId ? 'Вы' : 'Слушатель'}</span>
-                    <span><i class="fas fa-database"></i> ${(s.size/1024).toFixed(1)} KB</span>
-                </div>
-                <div class="card-actions">
-                    <button class="btn-like ${isLiked ? 'liked' : ''}" data-id="${s.$id}" data-likes="${s.likesCount || 0}">
-                        <i class="fas fa-heart"></i> <span>${s.likesCount || 0}</span>
-                    </button>
-                    <button class="btn-play" data-id="${s.$id}"><i class="fas fa-play"></i></button>
-                    <button class="btn-download" data-id="${s.$id}"><i class="fas fa-download"></i></button>
-                    ${isMine ? `<button class="btn-delete" data-id="${s.$id}"><i class="fas fa-trash"></i></button>` : ''}
-                </div>
-            </div>
-        `;
-    }
-    html += `</div>`;
-    mainContent.innerHTML = html;
-
-    document.querySelectorAll('.btn-like').forEach(btn => {
-        btn.onclick = async () => {
-            const id = btn.getAttribute('data-id');
-            const likes = parseInt(btn.getAttribute('data-likes'));
-            await toggleLike(id, likes);
-        };
-    });
-    document.querySelectorAll('.btn-play').forEach(btn => {
-        btn.onclick = () => playSound(btn.getAttribute('data-id'));
-    });
-    
-    document.querySelectorAll('.btn-download').forEach(btn => {
-        btn.onclick = async (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            const s = allSounds.find(x => x.$id === btn.getAttribute('data-id'));
-            if (s) {
-                const url = storage.getFileView(BUCKET_ID, s.fileId);
-                try {
-                    const response = await fetch(url);
-                    const blob = await response.blob();
-                    const blobUrl = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = blobUrl;
-                    a.download = s.name;
-                    a.style.display = 'none';
-                    document.body.appendChild(a);
-                    a.click();
-                    setTimeout(() => {
-                        document.body.removeChild(a);
-                        URL.revokeObjectURL(blobUrl);
-                    }, 100);
-                } catch (err) {
-                    console.error("Ошибка скачивания:", err);
-                    alert("Не удалось скачать файл");
-                }
-            }
-        };
-    });
-    
-    document.querySelectorAll('.btn-delete').forEach(btn => {
-        btn.onclick = () => deleteSound(btn.getAttribute('data-id'), currentUserId);
-    });
-}
-
-function renderCurrentTab() {
-    if (currentTab === "upload") showUploadForm();
-    else renderSoundsList(getFilteredSounds());
-}
-
-function showUploadForm() {
-    mainContent.innerHTML = `
-        <div class="upload-area">
-            <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
-            <h3>Загрузи свой звук</h3>
-            <p>MP3, WAV, OGG до 10 МБ</p>
-            <input type="file" id="audioFile" accept=".mp3,.wav,.ogg" class="file-input">
-            <label for="audioFile" class="upload-label"><i class="fas fa-music"></i> Выбрать файл</label>
-            <div class="progress-bar"><div class="progress-fill" id="uploadProgress"></div></div>
-            <div id="uploadStatus" style="margin-top:1rem;"></div>
-        </div>
-    `;
-    document.getElementById("audioFile").onchange = handleUpload;
-}
-
-function setActiveTab(tabId) {
-    currentTab = tabId;
-    document.querySelectorAll('.nav-btn').forEach(btn => {
-        if (btn.getAttribute('data-tab') === tabId) {
-            btn.classList.add('active');
-        } else {
-            btn.classList.remove('active');
-        }
-    });
-    renderCurrentTab();
-}
-
-function showMainInterface() {
-    if (heroSection) heroSection.style.display = "none";
-    if (mainInterface) mainInterface.style.display = "block";
-    loadSounds();
-}
-
-// ========== ЗАПУСК ==========
-if (exploreBtn) exploreBtn.onclick = showMainInterface;
-if (uploadHeroBtn) uploadHeroBtn.onclick = () => { showMainInterface(); setActiveTab("upload"); };
-if (searchInput) searchInput.oninput = (e) => { searchQuery = e.target.value.toLowerCase(); renderCurrentTab(); };
-if (npPlayPause) npPlayPause.onclick = togglePlayPause;
-if (npPrev) npPrev.onclick = playPrev;
-if (npNext) npNext.onclick = playNext;
-if (volumeSlider) volumeSlider.oninput = (e) => { if (currentAudio) currentAudio.volume = e.target.value / 100; };
-if (userNameSpan) userNameSpan.textContent = localStorage.getItem("userName") || "Listener";
-
+// ========== НАВИГАЦИЯ ==========
 document.querySelectorAll('.nav-btn').forEach(btn => {
-    btn.onclick = () => setActiveTab(btn.getAttribute('data-tab'));
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentTab = btn.getAttribute('data-tab');
+        loadSounds();
+    });
 });
 
-showMainInterface();
+// ========== ПОИСК ==========
+searchToggle?.addEventListener('click', () => {
+    searchBar.style.display = 'flex';
+    searchInput.focus();
+});
+
+closeSearch?.addEventListener('click', () => {
+    searchBar.style.display = 'none';
+    searchInput.value = '';
+    searchQuery = '';
+    loadSounds();
+});
+
+searchInput?.addEventListener('input', (e) => {
+    searchQuery = e.target.value;
+    renderSounds();
+});
+
+uploadBtn?.addEventListener('click', showUploadModal);
+
+// Закрытие модалок
+document.querySelectorAll('.modal-close, .modal-overlay').forEach(el => {
+    el?.addEventListener('click', () => {
+        soundModal.classList.remove('active');
+        uploadModal.classList.remove('active');
+    });
+});
+
+// ========== ЗАПУСК ==========
+userNameSpan.innerText = localStorage.getItem('userName') || 'ГОСТЬ';
+loadSounds();
