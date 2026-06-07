@@ -3,80 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>NEON WAVE | Audio Universe</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Juvox Wave | Неоновый браузер</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/appwrite@17.0.0"></script>
-    <!-- GoatCounter Analytics -->
-    <script data-goatcounter="https://pererss.goatcounter.com/count"
-            async src="//gc.zgo.at/count.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-    <div class="stars"></div>
-    <div class="twinkling"></div>
-    
-    <div class="app-container">
-        <!-- HERO СЕКЦИЯ -->
-        <div class="hero-section" id="heroSection">
-            <div class="hero-content">
-                <div class="logo">
-                    <i class="fas fa-head-side-vr"></i>
-                    <span>NEON<span>WAVE</span></span>
-                </div>
-                <div class="hero-title">
-                    <h1>Погрузись в <span class="gradient-text">мир звука</span></h1>
-                    <p>Загружай, делись, открывай новое</p>
-                </div>
-                <div class="hero-buttons">
-                    <button class="btn-primary" id="exploreBtn"><i class="fas fa-compass"></i> Исследовать</button>
-                    <button class="btn-secondary" id="uploadBtn"><i class="fas fa-cloud-upload-alt"></i> Загрузить трек</button>
-                </div>
-                <div class="hero-stats">
-                    <div class="stat"><span class="stat-number" id="totalSoundsCount">0</span><span class="stat-label">звуков</span></div>
-                    <div class="stat"><span class="stat-number" id="totalLikesCount">0</span><span class="stat-label">лайков</span></div>
-                </div>
+    <div class="bg-animation">
+        <div class="gradient-orb orb1"></div>
+        <div class="gradient-orb orb2"></div>
+        <div class="gradient-orb orb3"></div>
+    </div>
+
+    <div class="browser">
+        <div class="user-panel" id="userPanel">
+            <div class="user-greeting" id="userGreeting">⚡ НЕ АВТОРИЗОВАН</div>
+            <div id="authButtons">
+                <button class="auth-btn" id="loginBtn">ВХОД</button>
+                <button class="auth-btn" id="logoutBtn" style="display:none">ВЫЙТИ</button>
+            </div>
+            <div class="user-avatar" id="userAvatar" style="display:none">
+                <i class="fas fa-user-astronaut"></i>
             </div>
         </div>
 
-        <!-- ОСНОВНОЙ ИНТЕРФЕЙС -->
-        <div class="main-interface" id="mainInterface" style="display: none;">
-            <div class="top-bar">
-                <div class="logo-small"><i class="fas fa-head-side-vr"></i><span>NEON<span>WAVE</span></span></div>
-                <div class="search-bar"><i class="fas fa-search"></i><input type="text" id="searchInput" placeholder="Поиск звуков..."></div>
-                <div class="user-info"><div class="user-avatar"><i class="fas fa-user-astronaut"></i></div><span class="user-name" id="userName">Listener</span></div>
-            </div>
-            
-            <div class="now-playing" id="nowPlaying" style="display: none;">
-                <div class="np-glow"></div>
-                <div class="np-content">
-                    <div class="np-wave"><i class="fas fa-music"></i></div>
-                    <div class="np-info"><div class="np-title" id="npTitle">-</div><div class="np-artist" id="npArtist">Не выбрано</div></div>
-                    <div class="np-controls">
-                        <button id="npPrev"><i class="fas fa-backward-step"></i></button>
-                        <button id="npPlayPause"><i class="fas fa-play"></i></button>
-                        <button id="npNext"><i class="fas fa-forward-step"></i></button>
-                    </div>
-                    <div class="np-volume"><i class="fas fa-volume-up"></i><input type="range" id="volumeSlider" min="0" max="100" value="70"></div>
-                </div>
-            </div>
+        <div class="tab-bar" id="tabBar"></div>
 
-            <main id="main-content"><div class="loader"><div class="neon-loader"></div></div></main>
+        <div class="nav-bar">
+            <button class="nav-btn" id="backBtn"><i class="fas fa-arrow-left"></i> НАЗАД</button>
+            <button class="nav-btn" id="forwardBtn"><i class="fas fa-arrow-right"></i> ВПЕРЁД</button>
+            <button class="nav-btn" id="reloadBtn"><i class="fas fa-sync-alt"></i> ОБНОВИТЬ</button>
+            <button class="nav-btn" id="homeBtn"><i class="fas fa-home"></i> ДОМОЙ</button>
+            <input type="text" class="url-bar" id="urlBar" placeholder="🔍 ПОИСК ИЛИ ВВЕДИТЕ АДРЕС...">
+            <button class="nav-btn" id="settingsBtn"><i class="fas fa-cog"></i> НАСТРОЙКИ</button>
+        </div>
 
-            <nav class="bottom-nav">
-                <button class="nav-btn active" data-tab="home"><i class="fas fa-home"></i><span>Главная</span><div class="nav-glow"></div></button>
-                <button class="nav-btn" data-tab="trending"><i class="fas fa-fire"></i><span>Тренды</span><div class="nav-glow"></div></button>
-                <button class="nav-btn" data-tab="my"><i class="fas fa-head-side-headphones"></i><span>Моя библиотека</span><div class="nav-glow"></div></button>
-                <button class="nav-btn" data-tab="upload"><i class="fas fa-cloud-upload-alt"></i><span>Загрузить</span><div class="nav-glow"></div></button>
-                <button class="nav-btn" data-tab="favorites"><i class="fas fa-heart"></i><span>Любимое</span><div class="nav-glow"></div></button>
-            </nav>
+        <div class="viewer">
+            <iframe id="webpage" src="https://www.google.com"></iframe>
+        </div>
+    </div>
+
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <h3>✨ НАСТРОЙКИ JUVOX WAVE</h3>
+            <div class="setting-item">
+                <label>🌍 ПОИСКОВАЯ СИСТЕМА</label>
+                <select id="searchEngine">
+                    <option value="google">GOOGLE</option>
+                    <option value="yandex">ЯНДЕКС</option>
+                    <option value="duckduckgo">DUCKDUCKGO</option>
+                </select>
+            </div>
+            <div class="setting-item">
+                <label>🎨 ТЕМА</label>
+                <select id="theme">
+                    <option value="dark">НЕОН (ТЁМНАЯ)</option>
+                    <option value="light">СВЕТЛАЯ</option>
+                </select>
+            </div>
+            <div class="setting-item">
+                <label>🏠 ДОМАШНЯЯ СТРАНИЦА</label>
+                <input type="text" id="homePage" placeholder="https://...">
+            </div>
+            <button class="save-settings" id="saveSettingsBtn">💾 СОХРАНИТЬ</button>
         </div>
     </div>
 
     <script src="script.js"></script>
-    <!-- Счётчик посещений (видимая картинка) -->
-    <div style="position: fixed; bottom: 80px; right: 10px; z-index: 999; background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 20px; font-size: 12px;">
-        <img src="https://pererss.goatcounter.com/count?p=*" alt="visitors" style="width: auto; height: 20px;">
-    </div>
 </body>
 </html>
