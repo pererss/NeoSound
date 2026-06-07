@@ -93,8 +93,7 @@ async function deleteSound(soundId, userId) {
         await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, soundId);
         await loadSounds();
     } catch (err) {
-        console.error("Ошибка удаления:", err);
-        alert("Ошибка удаления: " + err.message);
+        alert("Ошибка удаления");
     }
 }
 
@@ -333,14 +332,15 @@ function setActiveTab(tabId) {
     renderCurrentTab();
 }
 
-// ========== ЗАПУСК (без главного экрана) ==========
-// Сразу показываем основной интерфейс
-if (heroSection) heroSection.style.display = "none";
-if (mainInterface) mainInterface.style.display = "block";
+function showMainInterface() {
+    if (heroSection) heroSection.style.display = "none";
+    if (mainInterface) mainInterface.style.display = "block";
+    loadSounds();
+}
 
-// Назначаем обработчики
-if (exploreBtn) exploreBtn.onclick = () => {};
-if (uploadHeroBtn) uploadHeroBtn.onclick = () => { setActiveTab("upload"); };
+// ========== ЗАПУСК ==========
+if (exploreBtn) exploreBtn.onclick = showMainInterface;
+if (uploadHeroBtn) uploadHeroBtn.onclick = () => { showMainInterface(); setActiveTab("upload"); };
 if (searchInput) searchInput.oninput = (e) => { searchQuery = e.target.value.toLowerCase(); renderCurrentTab(); };
 if (npPlayPause) npPlayPause.onclick = togglePlayPause;
 if (npPrev) npPrev.onclick = playPrev;
@@ -352,5 +352,4 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.onclick = () => setActiveTab(btn.getAttribute('data-tab'));
 });
 
-// Загружаем звуки
-loadSounds();
+showMainInterface();
